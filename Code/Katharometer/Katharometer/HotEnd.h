@@ -35,14 +35,13 @@
 class HotEnd {
 public:
 	HotEnd();
-	HotEnd(uint8_t &thermistorPins, uint8_t &PWMPins);
+	HotEnd(uint8_t * thermistorPins, uint8_t * PWMPins);
 	void SetDesiredTemp(int &temp);
-
-	AutoPID TempPID;
+	AutoPID TempPID = AutoPID(&temperature, &setPoint, &PWMValue, OUTPUT_MIN, OUTPUT_MAX, KP, KI, KD);
 	thermistor Themistor[4];
 	double Kp, Ki, Kd;
-	uint8_t ThermistorPins[4];
-	uint8_t PWMPins[2];
+	uint8_t ThermistorPins[4] = {A0, A1, A2, A3};
+	uint8_t PWMPins[2] = {10, 11};
 private:
 	double temperature;
 	double setPoint;
