@@ -52,7 +52,7 @@ class HotEnd {
 public:
 	HotEnd();
 	HotEnd(uint8_t * thermistorPins, uint8_t * PWMPins);
-	void SetDesiredTemp(int &temp);
+	void SetDesiredTemp(uint16_t &temp);
 	void InitIO();
 	bool UpdateTemperature();
 	void Execute();
@@ -63,11 +63,11 @@ public:
 	uint8_t ThermistorPins[4] = {A0, A1, A2, A3};
 	uint8_t PWMPins[2] = {10, 11};
 	uint8_t ledPin = TEMP_LED_PIN;
+	double midTemps[2];
 private:
 	void QuickUpdateTemp();
 	thermistor MidLeft = thermistor(ThermistorPins[0], 0);
 	thermistor MidRight = thermistor(ThermistorPins[1], 0);
-	double midTemps[2];
 	double setPoint;
 	double PWM1;
 	double PWM2;

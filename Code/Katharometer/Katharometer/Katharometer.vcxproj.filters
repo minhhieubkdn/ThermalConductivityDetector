@@ -24,9 +24,15 @@
     <ClInclude Include="HotEnd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Themistor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HotEnd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Themistor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -13,7 +13,7 @@ HotEnd::HotEnd()
 	this->setPoint = 0;
 	this->PWM1 = 0;
 	this->PWM2 = 0;
-	while (!UpdateTemperature) {};
+	UpdateTemperature();
 	this->LeftTempPID.setBangBang(BANGBANG_TEMP);
 	this->LeftTempPID.setTimeStep(PID_TIME_STEP);
 	this->RightTempPID.setBangBang(BANGBANG_TEMP);
@@ -23,10 +23,8 @@ HotEnd::HotEnd()
 HotEnd::HotEnd(uint8_t * thermistorPins, uint8_t * PWMPins)
 {
 	HotEnd();
-	for (int i = 0; i < 4; i++)
-	{
-		this->ThermistorPins[i] = thermistorPins[i];
-	}
+	this->ThermistorPins[0] = thermistorPins[0];
+	this->ThermistorPins[1] = thermistorPins[1];
 	this->PWMPins[0] = PWMPins[0];
 	this->PWMPins[1] = PWMPins[1];
 	InitIO();
@@ -39,7 +37,7 @@ void HotEnd::InitIO()
 	pinMode(this->ledPin, OUTPUT);
 }
 
-void HotEnd::SetDesiredTemp(int & temp)
+void HotEnd::SetDesiredTemp(uint16_t & temp)
 {
 	this->setPoint = temp;
 }

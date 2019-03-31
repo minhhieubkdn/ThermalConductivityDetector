@@ -113,10 +113,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HotEnd.h" />
+    <ClInclude Include="Themistor.h" />
     <ClInclude Include="__vm\.Katharometer.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HotEnd.cpp" />
+    <ClCompile Include="Themistor.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
