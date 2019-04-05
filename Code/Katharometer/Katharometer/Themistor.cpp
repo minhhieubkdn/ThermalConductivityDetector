@@ -4,15 +4,15 @@
 
 #include "Themistor.h"
 
-Thermistor::Thermistor(uint8_t thermPin, uint8_t type)
+Thermistor::Thermistor(uint8_t thermPin)
 {
-	this->therm = thermistor(thermPin, type);
+	this->therm = thermistor(thermPin, 0);
 }
 
 void Thermistor::Read()
 {
-	this->doubleTemp = therm.analog2temp();
-	this->temperature = uint16_t(this->doubleTemp);
+	this->floatTemp = therm.analog2temp();
+	this->temperature = uint16_t(this->floatTemp);
 }
 
 uint16_t Thermistor::ReadTemp()
@@ -21,8 +21,8 @@ uint16_t Thermistor::ReadTemp()
 	return this->temperature;
 }
 
-double Thermistor::ReadTempDouble()
+float Thermistor::ReadTempFloat()
 {
 	Read();
-	return this->doubleTemp;
+	return this->floatTemp;
 }

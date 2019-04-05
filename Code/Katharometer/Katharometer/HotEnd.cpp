@@ -6,9 +6,6 @@
 
 HotEnd::HotEnd()
 {
-	this->Kp = KP;
-	this->Ki = KI;
-	this->Kd = KD;
 	this->midTemps[2] = {0};
 	this->setPoint = 0;
 	this->PWM1 = 0;
@@ -20,13 +17,11 @@ HotEnd::HotEnd()
 	this->RightTempPID.setTimeStep(PID_TIME_STEP);
 }
 
-HotEnd::HotEnd(uint8_t * thermistorPins, uint8_t * PWMPins)
+HotEnd::HotEnd(uint8_t * _PWMPins)
 {
 	HotEnd();
-	this->ThermistorPins[0] = thermistorPins[0];
-	this->ThermistorPins[1] = thermistorPins[1];
-	this->PWMPins[0] = PWMPins[0];
-	this->PWMPins[1] = PWMPins[1];
+	this->PWMPins[0] = _PWMPins[0];
+	this->PWMPins[1] = _PWMPins[1];
 	InitIO();
 }
 
@@ -34,7 +29,7 @@ void HotEnd::InitIO()
 {
 	pinMode(this->PWMPins[0], OUTPUT);
 	pinMode(this->PWMPins[1], OUTPUT);
-	pinMode(this->ledPin, OUTPUT);
+	pinMode(TEMP_LED_PIN, OUTPUT);
 }
 
 void HotEnd::SetDesiredTemp(uint16_t & temp)
@@ -46,12 +41,13 @@ void HotEnd::Execute()
 {
 	static uint32_t delayTime1 = millis();
 	static uint32_t delayTime2 = millis();
+
 	if (millis() > delayTime1 + 200) 
 	{
 		QuickUpdateTemp();
 		LeftTempPID.run();
 		analogWrite(PWMPins[0], PWM1);
-		digitalWrite(this->ledPin, LeftTempPID.atSetPoint(2));
+		digitalWrite(TEMP_LED_PIN, LeftTempPID.atSetPoint(2));
 		delayTime1 = millis();
 	}
 
@@ -60,7 +56,7 @@ void HotEnd::Execute()
 		QuickUpdateTemp();
 		RightTempPID.run();
 		analogWrite(PWMPins[1], PWM2);
-		digitalWrite(this->ledPin, RightTempPID.atSetPoint(4));
+		digitalWrite(TEMP_LED_PIN, RightTempPID.atSetPoint(4));
 		delayTime2 = millis();
 	}
 }
@@ -70,8 +66,8 @@ bool HotEnd::UpdateTemperature()
 	static uint32_t lastUpdate = millis();
 	if (millis() > DELAY_UPDATE_TIME + lastUpdate)
 	{
-		this->midTemps[0] = MidLeft.analog2temp();
-		this->midTemps[1] = MidRight.analog2temp();
+		this->midTemps[0] = this->MidLeft.ReadTempFloat();
+		this->midTemps[1] = this->MidRight.ReadTempFloat();
 		lastUpdate = millis();
 		return true;
 	}
@@ -81,9 +77,16 @@ bool HotEnd::UpdateTemperature()
 	}
 }
 
+void HotEnd::ReadAndSetMidTempsTo(float * _midTemps)
+{
+	this->QuickUpdateTemp();
+	_midTemps[0] = this->midTemps[0];
+	_midTemps[1] = this->midTemps[1];
+}
+
 void HotEnd::QuickUpdateTemp()
 {
-	this->midTemps[0] = MidLeft.analog2temp();
-	this->midTemps[1] = MidRight.analog2temp();
+	this->midTemps[0] = MidLeft.ReadTempFloat();
+	this->midTemps[1] = MidRight.ReadTempFloat();
 }
 

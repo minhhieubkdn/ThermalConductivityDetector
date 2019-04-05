@@ -12,15 +12,15 @@
 #include <thermistor.h>
 class Thermistor {
 public:
-	Thermistor(uint8_t thermPin, uint8_t type);
-	void Read();
+	Thermistor(uint8_t thermPin);
 	uint16_t ReadTemp();
-	double ReadTempDouble();
+	float ReadTempFloat();
 
 private:
+	void Read();
 	thermistor therm = thermistor(A0, 0);
 	uint16_t temperature;
-	double doubleTemp;
+	float floatTemp;
 };
 
 #endif
