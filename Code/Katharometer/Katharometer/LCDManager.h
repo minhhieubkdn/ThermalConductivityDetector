@@ -34,7 +34,6 @@ public:
 	void LCDExecute();
 	void (*StartChecking)(void);
 
-private:
 	uint8_t mButtonArray[6] = { LEFT, RIGHT, UP, DOWN, RETURN, ENTER };
 };
 
