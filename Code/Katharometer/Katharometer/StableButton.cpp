@@ -42,6 +42,7 @@ void StableButtonClass::Init(uint8_t* btArr, uint8_t number)
 		isUpArray[index] = true;
 		counterArray[index] = 0;
 	}
+	InitIO();
 }
 
 bool StableButtonClass::IsPressing(uint8_t pin)
@@ -68,12 +69,14 @@ bool StableButtonClass::IsPressed(uint8_t pin)
 	{
 		if ((millis() - counterArray[index]) > maxDelayArray[index])
 		{
+			digitalWrite(RESPOND_LED, HIGH);
 			isUpArray[index] = true;
-			maxDelayArray[index] = 100;
+			maxDelayArray[index] = 150;
 		}
 
 		if (isUpArray[index] == true)
 		{
+			digitalWrite(RESPOND_LED, LOW);
 			counterArray[index] = millis();
 			isUpArray[index] = false;
 			return true;
@@ -86,6 +89,12 @@ bool StableButtonClass::IsPressed(uint8_t pin)
 		maxDelayArray[index] = 1000;
 	}
 	return false;
+}
+
+void StableButtonClass::InitIO()
+{
+	pinMode(HEATING_LED, OUTPUT);
+	pinMode(RESPOND_LED, OUTPUT);
 }
 
 StableButtonClass StableButton;

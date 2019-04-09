@@ -9,6 +9,9 @@
 	#include "WProgram.h"
 #endif
 
+#define HEATING_LED 12
+#define RESPOND_LED 13
+
 struct Button
 {
 	uint8_t pin;
@@ -28,7 +31,7 @@ class StableButtonClass
 	 unsigned long* counterArray;
 	 uint16_t* maxDelayArray;		// Times to receive a button signal 
 	 bool* isUpArray;
-
+	 void InitIO();
 
 };
 

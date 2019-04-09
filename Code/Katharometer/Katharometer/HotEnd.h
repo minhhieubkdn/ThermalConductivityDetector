@@ -41,7 +41,7 @@
 #endif
 
 #ifndef DELAY_UPDATE_TIME 
-#define DELAY_UPDATE_TIME 1000
+#define DELAY_UPDATE_TIME 200
 #endif
 
 #ifndef BANGBANG_TEMP
@@ -49,7 +49,7 @@
 #endif
 
 #ifndef PID_TIME_STEP
-#define PID_TIME_STEP 4000
+#define PID_TIME_STEP 250
 #endif
 
 #ifndef TEMP_LED_PIN
@@ -74,10 +74,11 @@ public:
 	void ReadAndSetMidTempsTo(float *_midTemps);
 	void Execute();
 
-	AutoPID LeftTempPID = AutoPID(&midTemps[0], &setPoint, &PWM1, OUTPUT_MIN, OUTPUT_MAX, KP, KI, KD);
-	AutoPID RightTempPID = AutoPID(&midTemps[1], &setPoint, &PWM2, OUTPUT_MIN, OUTPUT_MAX, KP, KI, KD);
+	AutoPID LeftTempPID = AutoPID(&midLeftTemp, &setPoint, &PWM1, OUTPUT_MIN, OUTPUT_MAX, KP, KI, KD);
+	AutoPID RightTempPID = AutoPID(&midRightTemp, &setPoint, &PWM2, OUTPUT_MIN, OUTPUT_MAX, KP, KI, KD);
 	uint8_t PWMPins[2] = { PWM_PIN_1, PWM_PIN_2 };
-	float midTemps[2];
+	float midLeftTemp;
+	float midRightTemp;
 	Thermistor MidLeft = Thermistor(MID_LEFT_THERMISTOR);
 	Thermistor MidRight = Thermistor(MID_RIGHT_THERMISTOR);
 private:

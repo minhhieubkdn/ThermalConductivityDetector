@@ -24,8 +24,10 @@ public:
 };
 
 void ACS712::Run() {
+	pinMode(CURRENT_SENSOR_PIN, INPUT);
 	this->RawValue = analogRead(CURRENT_SENSOR_PIN);
-	this->Voltage = (this->RawValue / 1024.0) * 5000;
+	this->Voltage = (this->RawValue / 1023.0) * 5000;
+	// this->Amps = (.044 * this->RawValue - 3.78);
 	this->Amps = ((this->Voltage - ACSOFFSET) / VPERAMP);
 }
 

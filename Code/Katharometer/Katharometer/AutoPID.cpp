@@ -35,7 +35,6 @@ void AutoPID::setTimeStep(unsigned long timeStep){
   _timeStep = timeStep;
 }
 
-
 bool AutoPID::atSetPoint(float threshold) {
   return abs(*_setpoint - *_input) <= threshold;
 }//bool AutoPID::atSetPoint
@@ -52,7 +51,7 @@ void AutoPID::run() {
   } else if (_bangOff && ((*_input - *_setpoint) > _bangOff)) {
     *_output = _outputMin;
     _lastStep = millis();
-  } else {                                    //otherwise use PID control
+  } else {										//otherwise use PID control
     unsigned long _dT = millis() - _lastStep;   //calculate time since last update
     if (_dT >= _timeStep) {                     //if long enough, do PID calculations
       _lastStep = millis();

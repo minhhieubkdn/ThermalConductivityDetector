@@ -42,6 +42,12 @@
     <ClInclude Include="LCDMenu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CustomTempPID.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NewHotEnd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HotEnd.cpp">
@@ -60,6 +66,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="LCDMenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomTempPID.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NewHotEnd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
