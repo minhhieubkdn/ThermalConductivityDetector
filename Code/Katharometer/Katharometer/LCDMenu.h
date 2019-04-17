@@ -77,7 +77,9 @@ public:
 	SubMenu(AbstractMenu* parent, String text, uint8_t col, uint8_t row);
 	~SubMenu();
 	DisplayElementType GetElementType();
+
 	AbstractMenu* Container;
+
 };
 
 class Label : public DisplayElement
@@ -104,7 +106,7 @@ public:
 	bool IsSelected;
 	float Max;
 	float Min;
-	void (*HandleWhenValueChange)(void);
+	void(*HandleWhenValueChange)(void);
 private:
 	float* pExternalValue_float;
 	uint16_t* pExternalValue_int;
@@ -122,6 +124,9 @@ public:
 
 class LCDMenuClass
 {
+protected:
+
+
 public:
 	void Init(LiquidCrystal_I2C* lcd, String intro);	// give a pointer of lcd using module I2C and intro text
 	void AddMenu(OriginMenu* menu);
@@ -151,6 +156,8 @@ private:
 	void eraseText(DisplayElement* procEle);
 	AbstractMenu* currentMenu;
 	VariableText* blinkVariableText;
+
+
 };
 
 extern LCDMenuClass LCDMenu;

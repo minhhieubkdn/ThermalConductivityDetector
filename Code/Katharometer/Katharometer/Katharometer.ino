@@ -1,9 +1,10 @@
 /*
- Name:		Katharometer.ino
- Created:	3/30/2019 3:20:17 PM
- Author:	Minh Hieu
+Name:		Katharometer.ino
+Created:	3/30/2019 3:20:17 PM
+Author:	Minh Hieu
 */
 
+#include <EEPROM.h>
 #include "NewHotEnd.h"
 #include "CustomTempPID.h"
 #define NEW_BUTTON_ARRAY
@@ -21,6 +22,10 @@
 #define HEATING_LED 12
 #define RESPOND_LED 13
 
+#define MODE_ADDRESS 0
+#define LAST_TEMP_ADDRESS 1
+#define LAST_PWM_ADDRESS 2
+
 #include <LiquidCrystal_I2C.h>
 #include "LCDManager.h"
 #include "Themistor.h"
@@ -28,14 +33,6 @@
 #include "ACS712.h"
 #include "NewHotEnd.h"
 
-struct FloatTemp
-{
-	float leftTemp;
-	float rightTemp;
-};
-
-uint8_t outThermistorPins[] = { A2, A3 };
-uint8_t PWMPins[] = { 10, 11 };
 LCDManager manager = LCDManager();
 LiquidCrystal_I2C *lcd = new LiquidCrystal_I2C(0x27, 16, 2);
 
@@ -47,8 +44,8 @@ uint16_t OutRightTemp;
 
 ACS712 acs;
 NewHotEnd Heater = NewHotEnd();
-Thermistor OutLeft = Thermistor(outThermistorPins[0]);
-Thermistor OutRight = Thermistor(outThermistorPins[1]);
+Thermistor OutLeft = Thermistor(A2);
+Thermistor OutRight = Thermistor(A3);
 
 float CurrentMidTempsFloat[2];
 float Current;
@@ -60,8 +57,9 @@ Label* lbDesiredTemp;
 VariableText* vtDesiredTemp;
 SubMenu* MeasureSubmenu;
 	Label* lbStartHeating;
-	FunctionText* smYes;
-	FunctionText* smNo;
+	FunctionText* ftYes;
+	FunctionText* ftNo;
+FunctionText* ftMode;
 
 OriginMenu* sttMenu = new OriginMenu();
 Label* lbMidTemps;
@@ -78,24 +76,32 @@ Label* lbVoltage;
 Label* vtVoltage;
 
 bool isHeating = false;
+bool mode = true; // == PID mode
+byte PWM = 0;
 
 void setup()
 {
 	LCDMenu.Init(lcd, "Katharometer");
-	LCDMenu.TurnCursor(false);
 	InitLCDMenu();
 	InitData();
-	Serial.begin(9600);
 	StableButton.Init(manager.mButtonArray, 6);
 }
 
-void loop() 
+void loop()
 {
 	static uint32_t last = millis();
 	ExecuteMenuButton();
 	LCDMenu.ExecuteEffect();
-	Heater.Execute();
-	if (millis() > last + 800)
+	if (mode)
+	{
+		Heater.Execute();
+	}
+	else
+	{
+		analogWrite(10, 255 - PWM);
+		analogWrite(11, 255 - PWM);
+	}
+	if (millis() > last + 500)
 	{
 		last = millis();
 		Current = acs.ReadCurrent();
@@ -103,7 +109,6 @@ void loop()
 		readTemp();
 		UpdateLabel();
 		LCDMenu.UpdateScreen();
-		PrintTempToSerial();
 	}
 }
 
@@ -116,30 +121,19 @@ void readTemp()
 	OutRightTemp = OutRight.ReadTemp();
 }
 
-void PrintTempToSerial()
-{
-	MidLeftTemp = CurrentMidTempsFloat[0];
-	MidRightTemp = CurrentMidTempsFloat[1];
-	Serial.println(MidLeftTemp);
-	Serial.println(MidRightTemp);
-	Serial.println(OutLeftTemp);
-	Serial.println(OutRightTemp);
-	Serial.println(DesiredMidTemp);
-	Serial.println();
-}
-
-void InitLCDMenu() 
+void InitLCDMenu()
 {
 	//firstMenu
 	{
 		lbDesiredTemp = new Label(firstMenu, "DesiredTemp: ", 0, 0);
 		vtDesiredTemp = new VariableText(firstMenu, 100, 13, 0);
-		MeasureSubmenu = new SubMenu(firstMenu, "Measure", 0, 1);
+		MeasureSubmenu = new SubMenu(firstMenu, "Heat", 0, 1);
 		{
 			lbStartHeating = new Label(MeasureSubmenu->Container, "Start heating?", 0, 0);
-			smYes = new FunctionText(MeasureSubmenu->Container, "Yes", 0, 1);
-			smNo = new FunctionText(MeasureSubmenu->Container, "No", 7, 1);
+			ftYes = new FunctionText(MeasureSubmenu->Container, "Yes", 0, 1);
+			ftNo = new FunctionText(MeasureSubmenu->Container, "No", 7, 1);
 		}
+		ftMode = new FunctionText(firstMenu, "PID", 8, 1);
 	}
 
 	//sttMenu
@@ -159,7 +153,7 @@ void InitLCDMenu()
 		lbVoltage = new Label(ACSMenu, "Voltage : ", 0, 1);
 		vtVoltage = new Label(ACSMenu, String(Voltage), 10, 1);
 	}
-	
+
 	LCDMenu.AddMenu(firstMenu);
 	LCDMenu.AddMenu(sttMenu);
 	LCDMenu.AddMenu(ACSMenu);
@@ -168,27 +162,76 @@ void InitLCDMenu()
 }
 
 void InitData()
- {
+{
 	DesiredMidTemp = 0;
 	vtDesiredTemp->HandleWhenValueChange = ChangeDesiredTemp;
-	smYes->Function = StartHeating;
-	smNo->Function = CancelHeating;
-}
+	ftYes->Function = StartHeating;
+	ftNo->Function = CancelHeating;
+	ftMode->Function = ChangeMode;
 
-void StartHeating(DisplayElement* ft) {
-	if (!isHeating)
+	EEPROM.begin();
+	mode = EEPROM.read(MODE_ADDRESS);
+	if (mode)
 	{
-		isHeating = true;
-		Heater.SetTemperature(DesiredMidTemp);
-		LCDMenu.Return();
-		LCDMenu.Return();
+		lbDesiredTemp->SetText("DesireTem:");
+		ftMode->SetText("PID_MODE");
+		vtDesiredTemp->SetValue(EEPROM.read(LAST_TEMP_ADDRESS));
+		vtDesiredTemp->Resolution = 5;
 	}
 	else
 	{
-		isHeating = false;
-		DesiredMidTemp = 0;
-		Heater.SetTemperature(DesiredMidTemp);
-		LCDMenu.Return();
+		vtDesiredTemp->SetValue(EEPROM.read(LAST_PWM_ADDRESS));
+		vtDesiredTemp->Resolution = 1;
+		lbDesiredTemp->SetText("PWM Value:");
+		ftMode->SetText("PWM_MODE");
+	}
+	vtDesiredTemp->IsTextChanged = true;
+	
+}
+
+void StartHeating(DisplayElement* ft) {
+	if (mode)
+	{
+		if (!isHeating)
+		{
+			if (DesiredMidTemp == 0)
+			{
+				ChangeDesiredTemp();
+			}
+			isHeating = true;
+			Heater.SetTemperature(DesiredMidTemp);
+			LCDMenu.Return();
+			LCDMenu.Return();
+		}
+		else
+		{
+			isHeating = false;
+			DesiredMidTemp = 0;
+			Heater.SetTemperature(DesiredMidTemp);
+			LCDMenu.Return();
+		}
+	}
+	else
+	{
+		if (!isHeating) {
+			if (PWM == 0)
+			{
+				PWM = roundf(vtDesiredTemp->GetValue());
+			}
+			analogWrite(10, 255 - PWM);
+			analogWrite(11, 255 - PWM);
+			isHeating = true;
+			LCDMenu.Return();
+			LCDMenu.Return();
+		}
+		else
+		{
+			isHeating = false;
+			PWM = 0;
+			analogWrite(10, 255);
+			analogWrite(11, 255);
+			LCDMenu.Return();
+		}
 	}
 }
 
@@ -203,7 +246,7 @@ void InitIO()
 	pinMode(RESPOND_LED, OUTPUT);
 }
 
-void UpdateLabel() 
+void UpdateLabel()
 {
 	if (isHeating)
 	{
@@ -222,7 +265,7 @@ void UpdateLabel()
 	vtVoltage->SetText(String(Voltage));
 }
 
-float ComputeLamda() 
+float ComputeLamda()
 {
 	float U = acs.ReadVoltage();
 	float I = acs.ReadCurrent();
@@ -267,5 +310,35 @@ void ExecuteMenuButton()
 }
 
 void ChangeDesiredTemp() {
-	DesiredMidTemp = roundf(vtDesiredTemp->GetValue());
+	if (mode)
+	{
+		DesiredMidTemp = roundf(vtDesiredTemp->GetValue());
+		EEPROM.update(LAST_TEMP_ADDRESS, DesiredMidTemp);
+	}
+	else
+	{
+		PWM = roundf(vtDesiredTemp->GetValue());
+		EEPROM.update(LAST_PWM_ADDRESS, PWM);
+	}
+}
+
+void ChangeMode(DisplayElement* de)
+{
+	mode = !mode;
+	if (mode) {
+		lbDesiredTemp->SetText("DesireTem:");
+		vtDesiredTemp->SetValue(EEPROM.read(LAST_TEMP_ADDRESS));
+		vtDesiredTemp->Resolution = 5;
+		ftMode->SetText("PID_MODE");
+		ftMode->IsTextChanged = true;
+	}
+	else
+	{
+		lbDesiredTemp->SetText("PWM Value:");
+		vtDesiredTemp->SetValue(EEPROM.read(LAST_PWM_ADDRESS));
+		vtDesiredTemp->Resolution = 1;
+		ftMode->SetText("PWM_MODE");
+		ftMode->IsTextChanged = true;
+	}
+	EEPROM.update(MODE_ADDRESS, mode);
 }

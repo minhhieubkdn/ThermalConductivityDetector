@@ -541,7 +541,7 @@ VariableText::VariableText(AbstractMenu* parent, float value, uint8_t col, uint8
 	Min = 0;
 	if (value - (int)value == 0)
 	{
-		Resolution = 1;
+		Resolution = 5;
 	}
 	else
 	{

@@ -20,22 +20,22 @@ void CustomTempPIDClass::init()
 void CustomTempPIDClass::Run()
 {
 	temperature_read = ReadTemp();
-	/*if (set_temperature == 0 || (temperature_read > set_temperature) && (temperature_read - set_temperature > 1)) {
-		analogWrite(PWM_pin, 255);
+	if (set_temperature == 0 || (temperature_read > set_temperature) && (temperature_read - set_temperature > 2)) {
+		analogWrite(this->PWM_pin, 255);
+		Time = millis();
 		return;
-	}*/
-	//PID_error = set_temperature - temperature_read + 3;
+	}
+
 	PID_error = set_temperature - temperature_read;
 	PID_p = 0.01 * kp * PID_error;
 	PID_i = 0.01 * PID_i + (ki * PID_error);
 
 	timePrev = Time;                           
-	Time = millis();                           
+	Time = millis();                            
 	elapsedTime = (Time - timePrev) / 1000;
 	PID_d = 0.01*kd*((PID_error - previous_error) / elapsedTime);
 	PID_value = PID_p + PID_i + PID_d;
 
-	//We define PWM range between 0 and 255
 	if (PID_value < 0)
 	{
 		PID_value = 0;
@@ -44,7 +44,7 @@ void CustomTempPIDClass::Run()
 	{
 		PID_value = 255;
 	}
-	analogWrite(PWM_pin, 255 - PID_value);
+	analogWrite(this->PWM_pin, 255 - this->PID_value);
 	previous_error = PID_error;
 }
 

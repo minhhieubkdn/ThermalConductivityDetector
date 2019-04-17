@@ -6,7 +6,8 @@
 
 NewHotEnd::NewHotEnd()
 {
-
+	LeftPID.init();
+	RightPID.init();
 }
 
 void NewHotEnd::SetTemperature(uint16_t _temp)

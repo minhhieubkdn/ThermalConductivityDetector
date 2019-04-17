@@ -16,18 +16,14 @@ class CustomTempPIDClass
 {
  protected:
 	 //int kp = 90;   int ki = 30;   int kd = 80;
-	 int kp = 60;   int ki = 15;   int kd = 80;
+	 int kp = 90;   int ki = 30;   int kd = 80;
 	 int PID_p = 0;    
 	 int PID_i = 0;    
 	 int PID_d = 0;
-	 float last_kp = 0;
-	 float last_ki = 0;
-	 float last_kd = 0;
-	 uint16_t set_temperature = 0;            //Default temperature setpoint. Leave it 0 and control it with rotary encoder
-
-	 uint16_t temperature_read = 0.0;
-	 uint16_t PID_error = 0;
-	 uint16_t previous_error = 0;
+	 float set_temperature = 0; 
+	 float temperature_read = 0;
+	 float PID_error = 0;
+	 float previous_error = 0;
 	 float elapsedTime, Time, timePrev;
 	 float PID_value = 0;
 	 uint8_t ThermistorPin = A0;
