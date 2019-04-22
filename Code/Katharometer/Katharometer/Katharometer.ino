@@ -1,12 +1,10 @@
-/*
+﻿/*
 Name:		Katharometer.ino
 Created:	3/30/2019 3:20:17 PM
 Author:	Minh Hieu
 */
 
-#include <EEPROM.h>
-#include "NewHotEnd.h"
-#include "CustomTempPID.h"
+#include "StableTemperature.h"
 #define NEW_BUTTON_ARRAY
 #define RETURN 7
 #define LEFT 2
@@ -27,13 +25,14 @@ Author:	Minh Hieu
 #define LAST_PWM_ADDRESS 2
 
 #include <LiquidCrystal_I2C.h>
-#include "LCDManager.h"
+#include <EEPROM.h>
+#include "NewHotEnd.h"
+#include "CustomTempPID.h"
 #include "Themistor.h"
 #include "LCDMenu.h"
-#include "ACS712.h"
-#include "NewHotEnd.h"
+#include "StableButton.h"
 
-LCDManager manager = LCDManager();
+uint8_t mButtonArray[6] = { LEFT, RIGHT, UP, DOWN, RETURN, ENTER };
 LiquidCrystal_I2C *lcd = new LiquidCrystal_I2C(0x27, 16, 2);
 
 uint16_t DesiredMidTemp = 0;
@@ -42,15 +41,11 @@ uint16_t MidRightTemp;
 uint16_t OutLeftTemp;
 uint16_t OutRightTemp;
 
-ACS712 acs;
 NewHotEnd Heater = NewHotEnd();
 Thermistor OutLeft = Thermistor(A2);
 Thermistor OutRight = Thermistor(A3);
 
 float CurrentMidTempsFloat[2];
-float Current;
-float Voltage;
-float lamda;
 
 OriginMenu* firstMenu = new OriginMenu();
 Label* lbDesiredTemp;
@@ -62,29 +57,38 @@ SubMenu* MeasureSubmenu;
 FunctionText* ftMode;
 
 OriginMenu* sttMenu = new OriginMenu();
-Label* lbMidTemps;
+Label* lbLeftTemp;
 Label* lbMidLeftTemp;
-Label* lbMidRightTemp;
-Label* lbOutTemp;
 Label* lbOutLeftTemp;
+Label* lbLeftDeltaTemp;
+Label* lbRightTemp;
+Label* lbMidRightTemp;
 Label* lbOutRightTemp;
+Label* lbRightDeltaTemp;
 
-OriginMenu* ACSMenu = new OriginMenu();
-Label* lbCurrent;
-Label* vtCurrent;
-Label* lbVoltage;
-Label* vtVoltage;
+//OriginMenu* ACSMenu = new OriginMenu();
+//Label* lbCurrent;
+//Label* vtCurrent;
+//Label* lbVoltage;
+//Label* vtVoltage;
+
+//OriginMenu* Caculator = new OriginMenu();
+//Label* lbLamda1, *lbLamda2;
+//Label* lbLamdaValue1, *lbLamdaValue2;
 
 bool isHeating = false;
 bool mode = true; // == PID mode
 byte PWM = 0;
+
+uint16_t lastDeltaT = 0;
+uint16_t StableDeltaT = 0;
 
 void setup()
 {
 	LCDMenu.Init(lcd, "Katharometer");
 	InitLCDMenu();
 	InitData();
-	StableButton.Init(manager.mButtonArray, 6);
+	StableButton.Init(mButtonArray, 6);
 }
 
 void loop()
@@ -101,11 +105,9 @@ void loop()
 		analogWrite(10, 255 - PWM);
 		analogWrite(11, 255 - PWM);
 	}
-	if (millis() > last + 500)
+	if (millis() > last + 800)
 	{
 		last = millis();
-		Current = acs.ReadCurrent();
-		Voltage = acs.ReadVoltage();
 		readTemp();
 		UpdateLabel();
 		LCDMenu.UpdateScreen();
@@ -138,25 +140,19 @@ void InitLCDMenu()
 
 	//sttMenu
 	{
-		lbMidTemps = new Label(sttMenu, "MidTem: ", 0, 0);
-		lbMidLeftTemp = new Label(sttMenu, "", 8, 0);
-		lbMidRightTemp = new Label(sttMenu, "", 12, 0);
-		lbOutTemp = new Label(sttMenu, "OutTem: ", 0, 1);
-		lbOutLeftTemp = new Label(sttMenu, "", 8, 1);
-		lbOutRightTemp = new Label(sttMenu, "", 12, 1);
-	}
+		lbLeftTemp = new Label(sttMenu, "Left:", 0, 0);
+		lbMidLeftTemp = new Label(sttMenu, "", 6, 0);
+		lbOutLeftTemp = new Label(sttMenu, "", 10, 0);
+		lbLeftDeltaTemp = new Label(sttMenu, "", 14, 0);
 
-	//ACSMenu
-	{
-		lbCurrent = new Label(ACSMenu, "Current : ", 0, 0);
-		vtCurrent = new Label(ACSMenu, String(Current), 10, 0);
-		lbVoltage = new Label(ACSMenu, "Voltage : ", 0, 1);
-		vtVoltage = new Label(ACSMenu, String(Voltage), 10, 1);
+		lbRightTemp = new Label(sttMenu, "Right:", 0, 1);
+		lbMidRightTemp = new Label(sttMenu, "", 6, 1);
+		lbOutRightTemp = new Label(sttMenu, "", 10, 1);
+		lbRightDeltaTemp = new Label(sttMenu, "", 14, 1);
 	}
 
 	LCDMenu.AddMenu(firstMenu);
 	LCDMenu.AddMenu(sttMenu);
-	LCDMenu.AddMenu(ACSMenu);
 	LCDMenu.SetCurrentMenu(firstMenu);
 	LCDMenu.UpdateScreen();
 }
@@ -186,10 +182,10 @@ void InitData()
 		ftMode->SetText("PWM_MODE");
 	}
 	vtDesiredTemp->IsTextChanged = true;
-	
 }
 
-void StartHeating(DisplayElement* ft) {
+void StartHeating(DisplayElement* ft)
+{
 	if (mode)
 	{
 		if (!isHeating)
@@ -213,7 +209,8 @@ void StartHeating(DisplayElement* ft) {
 	}
 	else
 	{
-		if (!isHeating) {
+		if (!isHeating) 
+		{
 			if (PWM == 0)
 			{
 				PWM = roundf(vtDesiredTemp->GetValue());
@@ -261,19 +258,8 @@ void UpdateLabel()
 	lbMidRightTemp->SetText(String(MidRightTemp));
 	lbOutLeftTemp->SetText(String(OutLeftTemp));
 	lbOutRightTemp->SetText(String(OutRightTemp));
-	vtCurrent->SetText(String(Current));
-	vtVoltage->SetText(String(Voltage));
-}
-
-float ComputeLamda()
-{
-	float U = acs.ReadVoltage();
-	float I = acs.ReadCurrent();
-	float lamda1, lamda2;
-	Heater.ReadAndSetTempTo(CurrentMidTempsFloat);
-	lamda1 = U * I * 0.02 / (0.09 * (CurrentMidTempsFloat[0] - OutLeft.ReadTempFloat()));
-	lamda2 = U * I * 0.02 / (0.09 * (CurrentMidTempsFloat[1] - OutRight.ReadTempFloat()));
-	return (lamda1 + lamda2) / 2;
+	lbLeftDeltaTemp->SetText(String(MidLeftTemp - OutLeftTemp));
+	lbRightDeltaTemp->SetText(String(MidRightTemp - OutRightTemp));
 }
 
 void ExecuteMenuButton()
@@ -309,7 +295,8 @@ void ExecuteMenuButton()
 	}
 }
 
-void ChangeDesiredTemp() {
+void ChangeDesiredTemp() 
+{
 	if (mode)
 	{
 		DesiredMidTemp = roundf(vtDesiredTemp->GetValue());
@@ -317,15 +304,20 @@ void ChangeDesiredTemp() {
 	}
 	else
 	{
-		PWM = roundf(vtDesiredTemp->GetValue());
-		EEPROM.update(LAST_PWM_ADDRESS, PWM);
+		byte _pwm = roundf(vtDesiredTemp->GetValue());
+		if (isHeating)
+		{
+			PWM = _pwm;
+		}
+		EEPROM.update(LAST_PWM_ADDRESS, _pwm);
 	}
 }
 
 void ChangeMode(DisplayElement* de)
 {
 	mode = !mode;
-	if (mode) {
+	if (mode)
+	{
 		lbDesiredTemp->SetText("DesireTem:");
 		vtDesiredTemp->SetValue(EEPROM.read(LAST_TEMP_ADDRESS));
 		vtDesiredTemp->Resolution = 5;

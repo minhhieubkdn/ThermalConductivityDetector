@@ -48,6 +48,9 @@
     <ClInclude Include="NewHotEnd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="StableTemperature.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HotEnd.cpp">
@@ -72,6 +75,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NewHotEnd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StableTemperature.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

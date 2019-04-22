@@ -9,7 +9,7 @@
 void LCDMenuClass::Init(LiquidCrystal_I2C* lcd, String intro = "LCD Menu")
 {
 	LCD = lcd;
-	IsCursorOn = true;
+	IsCursorOn = false;
 	CurrentCursor.X = -1;
 	CurrentCursor.Y = -1;
 
