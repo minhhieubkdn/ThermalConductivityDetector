@@ -60,6 +60,8 @@ OriginMenu* sttMenu = new OriginMenu();
 Label* lbLeftTemp;
 Label* lbMidLeftTemp;
 Label* lbOutLeftTemp;
+Label* lbDelta1;
+Label* lbDelta2;
 Label* lbLeftDeltaTemp;
 Label* lbRightTemp;
 Label* lbMidRightTemp;
@@ -140,15 +142,17 @@ void InitLCDMenu()
 
 	//sttMenu
 	{
-		lbLeftTemp = new Label(sttMenu, "Left:", 0, 0);
-		lbMidLeftTemp = new Label(sttMenu, "", 6, 0);
-		lbOutLeftTemp = new Label(sttMenu, "", 10, 0);
-		lbLeftDeltaTemp = new Label(sttMenu, "", 14, 0);
+		lbLeftTemp = new Label(sttMenu, "L", 0, 0);
+		lbMidLeftTemp = new Label(sttMenu, "", 2, 0);
+		lbOutLeftTemp = new Label(sttMenu, "", 6, 0);
+		lbDelta1 = new Label(sttMenu, "d1=", 10, 0);
+		lbLeftDeltaTemp = new Label(sttMenu, "", 13, 0);
 
-		lbRightTemp = new Label(sttMenu, "Right:", 0, 1);
-		lbMidRightTemp = new Label(sttMenu, "", 6, 1);
-		lbOutRightTemp = new Label(sttMenu, "", 10, 1);
-		lbRightDeltaTemp = new Label(sttMenu, "", 14, 1);
+		lbRightTemp = new Label(sttMenu, "R", 0, 1);
+		lbMidRightTemp = new Label(sttMenu, "", 2, 1);
+		lbOutRightTemp = new Label(sttMenu, "", 6, 1);
+		lbDelta2 = new Label(sttMenu, "d2=", 10, 1);
+		lbRightDeltaTemp = new Label(sttMenu, "", 13, 1);
 	}
 
 	LCDMenu.AddMenu(firstMenu);
